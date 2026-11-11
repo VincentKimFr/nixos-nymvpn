@@ -118,6 +118,8 @@ imports = [
 den.aspects.<my_aspect> = {
   includes = [
     nymvpn.aspects.nymvpn
+    # or for autologin and autoconnect:
+    nymvpn.aspects.nymvpn.sops
   ];
 };
 ```
@@ -140,7 +142,7 @@ sops edit secrets/secrets.yaml
 ```
 
 ```yaml
-nym-vpn:
+nymvpn:
   secret: |
     your 24 word secret seed
 ```
@@ -148,11 +150,22 @@ nym-vpn:
 Enable secret management in your config.
 
 ```nix
+#flake.nix
+sops-nix = {
+  url = "github:Mic92/sops-nix";
+  inputs.nixpkgs.follows = "nixpkgs";
+};
+```
+
+```nix
+imports = [
+  inputs.sops-nix.nixosModules.sops
+];
 config.services.nymvpn.account.secret.enable = true;
 
 ```
 
-## Problems
+## The problems this flake solves.
 
 Two separate issues may occur on NixOS.
 
@@ -179,8 +192,6 @@ even when:
 - `/dev/net/tun` exists,
 - the `tun` kernel module is loaded,
 - the daemon runs as root.
-
----
 
 ## Cause
 

@@ -1,6 +1,4 @@
-# =========================================================
-# NYM GUI CLIENT — COMMENT THIS WHOLE BLOCK IF USING FLATPAK
-# =========================================================
+# NYM GUI CLIENT
 {
   lib,
   config,

@@ -59,19 +59,72 @@ with lib; let
       '';
     };
 in {
+  # Sops
+  imports = [
+    (import ./sops.nix {
+      inherit lib;
+      inherit config;
+      inherit options;
+      inherit pkgs;
+      inherit nym-vpn-core;
+    })
+  ];
+
   environment.systemPackages = [
     nym-vpn-core
     # pkgs.xdg-utils
+    # pkgs.iproute2
+    # pkgs.iptables
+    # pkgs.nftables
+    # pkgs.coreutils
   ];
+
+  ### ERROR nym_wg_go::wireguard_go: sendmmsg: operation not permitted
+  ### Firewall/ Blacklisting error
+  services.resolved.enable = true;
+
+  # Restart unbound when nym-vpnd service is down.
+  systemd.services.unbound.conflicts = mkDefault [
+    "systemd-resolved.service"
+    "nym-vpnd.service"
+  ];
+
+  systemd.services.systemd-resolved = {
+    # Nym can't run alongside the "unbound" dns resolver.
+    # Compatible resolvers are:
+    # - /etc/resolv.conf
+    # - systemd-resolved
+    # - reslvconf
+    # - NetworkManager
+    # Here we arbitrarily chose to use systemd-resolved.
+
+    wantedBy = mkDefault [
+      "nym-vpnd.service"
+    ];
+    conflicts = with lib;
+      mkMerge [
+        (mkIf (config.services.nsd.port == 53) ["nsd.service"])
+        (mkIf (
+            (config.services.unbound.enable == true)
+            || (config.services.unbound.settings.server.port == "53")
+          )
+          ["unbound.service"])
+        ["resolvconf.service"]
+      ];
+  };
 
   # NYM DAEMON
   systemd.services.nym-vpnd = {
     description = "nym-vpnd daemon";
 
-    wantedBy = ["multi-user.target"];
+    after = [
+      "NetworkManager.service"
+      "systemd-resolved.service"
+    ];
     before = ["network-online.target"];
 
-    after = [
+    wantedBy = [
+      "multi-user.target"
       "NetworkManager.service"
       "systemd-resolved.service"
     ];
@@ -103,28 +156,26 @@ in {
     startLimitBurst = 6;
     startLimitIntervalSec = 24;
 
-    serviceConfig = {
-      ExecStart = "${nym-vpn-core}/bin/nym-vpnd -v run-as-service";
+    serviceConfig = let
+      verbosity =
+        {
+          "error" = "";
+          "warn" = "";
+          "info" = "";
+          "debug" = "-v";
+          "trace" = "-vv";
+        }.${
+          config.services.${moduleName}.logLevel
+        };
+    in {
+      # Type = "forking";
+      Type = "exec";
 
-      # Auto-connect.
-      # Only on nixos generation rebuild and if sops is enabled.
-      #
-      # Reads the secret, connect to nym account, then delete the secret.
-      ExecStartPost = with lib;
-        mkMerge [
-          (mkIf (
-              (account.secret != null)
-              && (builtins.hasAttr "sops" options)
-            )
-            # Connect to account
-            ''
-              ${nym-vpn-core}/bin/nym-vpnc account set < $(cat ${config.sops.secrets."nym-vpn-secret".path})
-            ''
-            # Delete secret
-            + ''
-              rm -rf ${config.sops.secrets."nym-vpn-secret".path}
-            '')
-        ];
+      # ExecStart = "${nym-vpn-core}/bin/nym-vpnd -v run-as-service";
+      ExecStart = "${nym-vpn-core}/bin/nym-vpnd ${verbosity} run-with-args";
+
+      # Restore previous /etc/resolv.conf file.
+      ExecStopPost = "${pkgs.coreutils}/bin/cp -f /etc/resolv.conf.nymbackup /etc/resolv.conf";
 
       Restart = "always";
       RestartSec = 2;

@@ -1,8 +1,5 @@
-# =========================================================
 # POLKIT
-# =========================================================
 {
-  lib,
   config,
   pkgs,
   ...
@@ -43,7 +40,7 @@ in {
   environment.systemPackages = let
     nym-vpnd-polkit-policy = pkgs.writeTextFile {
       name = "nym-vpnd-polkit-policy";
-      destination = "/share/polkit-1/actions/com.nymvpn.vpnd.policy";
+      destination = "/share/polkit-1/actions/com.nymvpn.vpnd.unix-access.policy";
 
       text = ''
         <?xml version="1.0" encoding="UTF-8"?>
@@ -56,10 +53,10 @@ in {
           <vendor_url>https://nym.com</vendor_url>
 
           <action id="com.nymvpn.vpnd.unix-access">
-            <description>Access NymVPN daemon</description>
+            <description>Connect to NymVPN daemon via unix socket</description>
 
             <message>
-              Authentication is required to access the NymVPN daemon
+              Authentication is required to connect to the NymVPN daemon
             </message>
 
             <defaults>

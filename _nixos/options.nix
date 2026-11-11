@@ -1,14 +1,13 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
+{lib, ...}:
 with lib; let
   moduleName = "nymvpn";
 in {
   options.services.${moduleName} = {
     enable = mkEnableOption "Enable ${moduleName}.";
+    logLevel = mkOption {
+      default = "debug";
+      type = types.enum ["error" "warn" "info" "debug" "trace"];
+    };
     users = mkOption {
       type = types.listOf types.str;
       example = ''
@@ -16,8 +15,17 @@ in {
       '';
       description = "List of users for whom to allow nym vpn usage (polkit).";
     };
-    account.secret = {
-      enable = mkEnableOption "Enable ${moduleName}.";
+    account.secret.enable = mkOption {
+      type = types.bool;
+      default = false;
+      example = true;
+      description = "Enable sops account secret management.";
+    };
+    autoconnect.enable = mkOption {
+      type = types.bool;
+      default = false;
+      example = true;
+      description = "Connect as soon as possible.";
     };
     core = {
       version = mkOption {
