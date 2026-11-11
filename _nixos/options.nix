@@ -28,6 +28,7 @@ in {
       };
     };
     gui = {
+      enable = mkEnableOption "Enable the graphical user interface.";
       version = mkOption {
         type = types.str;
         default = "2026.15.0";
@@ -36,14 +37,6 @@ in {
       sha256 = mkOption {
         type = types.str;
         default = "sha256-hZ7H+LVI5jzNuhTRH3HWS5aky8RVLyeUAtpB+gmmVDw=";
-      };
-      packageType = mkOption {
-        type = types.enum ["nix" "flatpak"];
-        default = "nix";
-        description = ''
-          Where to install ${moduleName} GUI from.
-          You have to manually install the flatpak GUI.
-        '';
       };
     };
   };

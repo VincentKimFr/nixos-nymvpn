@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  options,
   pkgs,
   ...
 }:
@@ -77,6 +76,18 @@ in {
       "systemd-resolved.service"
     ];
 
+    # Starting nym-vpnd.service stops the local dns resolver if one is already running on port 53.
+    # Invertly starting the local resolver "nsd.service" or "unbound.service" will stop "nym-vpnd.service"
+    conflicts = with lib;
+      mkMerge [
+        (mkIf (config.services.nsd.port == 53) ["nsd.service"])
+        (mkIf (
+            (config.services.unbound.enable == true)
+            || (config.services.unbound.settings.server.port == "53")
+          )
+          ["unbound.service"])
+      ];
+
     # Required on NixOS:
     # upstream expects these networking tools in PATH.
     # Without this block, this setup reproduced:
@@ -99,19 +110,16 @@ in {
       RestartSec = 2;
 
       # Required for tunnel creation.
-
       AmbientCapabilities = [
         "CAP_NET_ADMIN"
         "CAP_NET_RAW"
         "CAP_NET_BIND_SERVICE"
       ];
-
       CapabilityBoundingSet = [
         "CAP_NET_ADMIN"
         "CAP_NET_RAW"
         "CAP_NET_BIND_SERVICE"
       ];
-
       NoNewPrivileges = false;
       PrivateNetwork = false;
     };
