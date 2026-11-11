@@ -2,7 +2,7 @@
   flake = {
     nixosModules = rec {
       default = nymvpn;
-      nymvpn = ./default.nix;
+      nymvpn = ./_nixos/default.nix;
     };
   };
 }
