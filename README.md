@@ -120,3 +120,35 @@ In that case:
 - remove the AppImage client package and MIME associations.
 
 However, using the AppImage client keeps GUI and daemon versions synchronized through NixOS configuration, which is generally more reproducible and reliable on NixOS systems.
+
+## Install
+
+### Flake
+
+Add the repo url to your configuration(flake) input.
+
+```nix
+#flake.nix
+inputs = {
+  nymvpn.url = "github:crocuda/nixos-nymvpn";
+}
+```
+
+Import and configure the nixos module.
+
+```nix
+# random config file
+{
+config,
+user,
+...
+}: {
+  imports = [
+    self.nixosModules.nymvpn
+  ];
+  config.services.nymvpn.users = [ <your_username> ];
+ };
+}
+```
+
+You may find the full option list at `_nixos/options.nix`
