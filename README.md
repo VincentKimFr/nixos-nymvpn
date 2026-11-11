@@ -75,7 +75,28 @@ user,
 }
 ```
 
-### With denful flake
+### With flake + Flatpak client support
+
+This module can also be used with the official NymVPN Flatpak client.
+
+In that case:
+
+- Disable the GUI installation via nix.
+
+```nix
+config.services.nymvpn.gui.enable = false;
+```
+
+This option will:
+
+- keep the `nym-vpnd` service,
+- keep the Polkit configuration,
+- keep the runtime PATH and capabilities fixes,
+- and remove the AppImage client package and MIME associations.
+
+However, using the AppImage client keeps GUI and daemon versions synchronized through NixOS configuration, which is generally more reproducible and reliable on NixOS systems.
+
+### With denful flake (dendritic)
 
 Add the repo url to your configuration(flake) input.
 
@@ -101,26 +122,35 @@ den.aspects.<my_aspect> = {
 };
 ```
 
-### Flatpak client support
+## Usage
 
-This module can also be used with the official NymVPN Flatpak client.
-
-In that case:
-
-- Disable the GUI installation via nix.
+### Auto-connect (with sops)
 
 ```nix
-config.nymvpn.services.gui.enable = false;
+#flake.nix
+inputs = {
+  nymvpn.url = "github:crocuda/nixos-nymvpn";
+}
 ```
 
-This option will:
+Add your nym account secret key to your secret file.
 
-- keep the `nym-vpnd` service,
-- keep the Polkit configuration,
-- keep the runtime PATH and capabilities fixes,
-- and remove the AppImage client package and MIME associations.
+```sh
+sops edit secrets/secrets.yaml
+```
 
-However, using the AppImage client keeps GUI and daemon versions synchronized through NixOS configuration, which is generally more reproducible and reliable on NixOS systems.
+```yaml
+nym-vpn:
+  secret: |
+    your 24 word secret seed
+```
+
+Enable secret management in your config.
+
+```nix
+config.services.nymvpn.account.secret.enable = true;
+
+```
 
 ## Problems
 

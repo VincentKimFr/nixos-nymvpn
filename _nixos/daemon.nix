@@ -106,6 +106,26 @@ in {
     serviceConfig = {
       ExecStart = "${nym-vpn-core}/bin/nym-vpnd -v run-as-service";
 
+      # Auto-connect.
+      # Only on nixos generation rebuild and if sops is enabled.
+      #
+      # Reads the secret, connect to nym account, then delete the secret.
+      ExecStartPost = with lib;
+        mkMerge [
+          (mkIf (
+              (account.secret != null)
+              && (builtins.hasAttr "sops" options)
+            )
+            # Connect to account
+            ''
+              ${nym-vpn-core}/bin/nym-vpnc account set < $(cat ${config.sops.secrets."nym-vpn-secret".path})
+            ''
+            # Delete secret
+            + ''
+              rm -rf ${config.sops.secrets."nym-vpn-secret".path}
+            '')
+        ];
+
       Restart = "always";
       RestartSec = 2;
 

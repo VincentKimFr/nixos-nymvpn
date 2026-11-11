@@ -16,6 +16,9 @@ in {
       '';
       description = "List of users for whom to allow nym vpn usage (polkit).";
     };
+    account.secret = {
+      enable = mkEnableOption "Enable ${moduleName}.";
+    };
     core = {
       version = mkOption {
         type = types.str;
