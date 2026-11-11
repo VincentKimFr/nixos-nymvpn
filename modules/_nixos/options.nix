@@ -11,7 +11,9 @@ in {
     enable = mkEnableOption "Enable ${moduleName}.";
     users = mkOption {
       type = types.listOf types.str;
-      example = "[john jane]";
+      example = ''
+        ["john" "jane"]";
+      '';
       description = "List of users for whom to allow nym vpn usage (polkit).";
     };
     core = {
