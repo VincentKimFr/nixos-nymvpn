@@ -175,7 +175,17 @@ in {
       ExecStart = "${nym-vpn-core}/bin/nym-vpnd ${verbosity} run-with-args";
 
       # Restore previous /etc/resolv.conf file.
-      ExecStopPost = "${pkgs.coreutils}/bin/cp -f /etc/resolv.conf.nymbackup /etc/resolv.conf";
+
+      ExecStopPost = let
+        name = "nym-vpnd-stop-script";
+        text = ''
+          set -x
+          set +e
+          ${pkgs.coreutils}/bin/cp -f /etc/resolv.conf.nymbackup /etc/resolv.conf
+          exit 0
+        '';
+        script = pkgs.writeShellScriptBin name text;
+      in "${script}/bin/${name}";
 
       Restart = "always";
       RestartSec = 2;
