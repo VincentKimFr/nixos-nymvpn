@@ -29,15 +29,11 @@ with lib; let
 
       # Required on NixOS:
       # without these tools in the service PATH,
-      # NymVPN may fail at tunnel setup with:
-      #
-      # Error(TunDevice)
-      #
+      # NymVPN may fail at tunnel setup with: Error(TunDevice)
       # even when:
       # - /dev/net/tun exists
       # - tun kernel module is loaded
       # - the daemon runs as root
-
       buildInputs = [
         pkgs.stdenv.cc.cc.lib
         pkgs.glibc
@@ -79,38 +75,23 @@ in {
     # pkgs.coreutils
   ];
 
-  ### ERROR nym_wg_go::wireguard_go: sendmmsg: operation not permitted
+  # Force static content inside /etc/resolv.conf
+  # to override nixpkgs systemd-resolved configuration.
+  environment.etc."resolv.conf.default".text = mkDefault (
+    concatMapStrings
+    (x: "nameserver ${x}\n")
+    config.networking.nameservers
+    + "options edns0 trust-ad"
+  );
+
   ### Firewall/ Blacklisting error
-  services.resolved.enable = true;
-
-  # Restart unbound when nym-vpnd service is down.
-  systemd.services.unbound.conflicts = mkDefault [
-    "systemd-resolved.service"
-    "nym-vpnd.service"
-  ];
-
-  systemd.services.systemd-resolved = {
-    # Nym can't run alongside the "unbound" dns resolver.
-    # Compatible resolvers are:
-    # - /etc/resolv.conf
-    # - systemd-resolved
-    # - reslvconf
-    # - NetworkManager
-    # Here we arbitrarily chose to use systemd-resolved.
-
-    wantedBy = mkDefault [
-      "nym-vpnd.service"
-    ];
-    conflicts = with lib;
-      mkMerge [
-        (mkIf (config.services.nsd.port == 53) ["nsd.service"])
-        (mkIf (
-            (config.services.unbound.enable == true)
-            || (config.services.unbound.settings.server.port == "53")
-          )
-          ["unbound.service"])
-        ["resolvconf.service"]
-      ];
+  services.resolved = {
+    enable = true;
+    settings = {
+      Resolve.DNSSEC = false;
+      # Resolve.DNSSEC = "allow-downgrade";
+      Resolve.DNSOverTLS = "opportunistic";
+    };
   };
 
   # NYM DAEMON
@@ -118,15 +99,17 @@ in {
     description = "nym-vpnd daemon";
 
     after = [
-      "NetworkManager.service"
+      # Dns
       "systemd-resolved.service"
+      "unbound.service"
+
+      "NetworkManager.service"
     ];
     before = ["network-online.target"];
 
     wantedBy = [
       "multi-user.target"
       "NetworkManager.service"
-      "systemd-resolved.service"
     ];
 
     # Starting nym-vpnd.service stops the local dns resolver if one is already running on port 53.
@@ -146,12 +129,16 @@ in {
     # Without this block, this setup reproduced:
     #
     # Error(TunDevice)
-    path = [
-      pkgs.iproute2
-      pkgs.iptables
-      pkgs.nftables
-      pkgs.coreutils
-    ];
+    path =
+      [
+        pkgs.iproute2
+        pkgs.coreutils
+      ]
+      ++ (
+        if config.networking.nftables.enable
+        then [pkgs.nftables]
+        else pkgs.iptables
+      );
 
     startLimitBurst = 6;
     startLimitIntervalSec = 24;
@@ -173,19 +160,6 @@ in {
 
       # ExecStart = "${nym-vpn-core}/bin/nym-vpnd -v run-as-service";
       ExecStart = "${nym-vpn-core}/bin/nym-vpnd ${verbosity} run-with-args";
-
-      # Restore previous /etc/resolv.conf file.
-
-      ExecStopPost = let
-        name = "nym-vpnd-stop-script";
-        text = ''
-          set -x
-          set +e
-          ${pkgs.coreutils}/bin/cp -f /etc/resolv.conf.nymbackup /etc/resolv.conf
-          exit 0
-        '';
-        script = pkgs.writeShellScriptBin name text;
-      in "${script}/bin/${name}";
 
       Restart = "always";
       RestartSec = 2;
