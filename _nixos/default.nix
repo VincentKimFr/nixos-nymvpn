@@ -6,7 +6,7 @@
     ./firewall.nix
     ./dns.nix
 
-    ./daemon.nix
+    ./daemon
 
     ./gui.nix
   ];

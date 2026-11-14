@@ -76,15 +76,6 @@ in {
     pkgs.coreutils
   ];
 
-  # Force static content inside /etc/resolv.conf
-  # to override nixpkgs systemd-resolved configuration.
-  environment.etc."resolv.conf.default".text = mkDefault (
-    concatMapStrings
-    (x: "nameserver ${x}\n")
-    config.networking.nameservers
-    + "options edns0 trust-ad"
-  );
-
   ### Firewall/ Blacklisting error
   services.resolved = {
     enable = true;
@@ -105,33 +96,16 @@ in {
       "unbound.service"
       "NetworkManager.service"
     ];
-    wants = ["systemd-resolved.service"];
-    requires = ["systemd-resolved.service"];
-
     before = ["network-online.target"];
+
     bindsTo = mkDefault ["systemd-resolved.service"];
+    # requires = ["systemd-resolved.service"];
+    # wants = ["systemd-resolved.service"];
 
     wantedBy = [
       "multi-user.target"
       "NetworkManager.service"
     ];
-
-    # Starting nym-vpnd.service stops the local dns resolver if one is already running on port 53.
-    # Invertly starting the local resolver "nsd.service" or "unbound.service" will stop "nym-vpnd.service"
-
-    # Stop if unbound is running,
-    # thus stopping the nym-vpnd daemon and deps:
-    # - systemd-resolved.
-    # conflicts = with lib;
-    #   mkMerge [
-    #     (mkIf (config.services.unbound.enable == true)
-    #       && (config.services.nsd.port == 53) ["nsd.service"])
-    #     (mkIf
-    #       (config.services.unbound.enable == true)
-    #       || (config.services.unbound.settings.server.port == "53")
-    #       ["unbound.service"])
-    #     ["resolvconf.service"]
-    #   ];
 
     # Required on NixOS:
     # upstream expects these networking tools in PATH.

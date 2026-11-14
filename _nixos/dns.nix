@@ -11,7 +11,7 @@ in {
   ## Create a default resolv.conf containing user defined nameservers if any.
   # The file is used later bellow inside the service definition to force static content inside /etc/resolv.conf and bring back old
   # behavior when systemd-resolved stops.
-  environment.etc."resolv.conf.default".text = mkDefault (
+  environment.etc."resolv.conf.d/resolv.conf.nymdefault".text = mkDefault (
     concatMapStrings
     (x: "nameserver ${x}\n")
     config.networking.nameservers
@@ -39,6 +39,7 @@ in {
           ["unbound.service"])
         ["resolvconf.service"]
       ];
+
     serviceConfig = {
       # On start.
       # Recreate a compatible /etc/resolv.conf that points to this service.
@@ -49,7 +50,7 @@ in {
           set -x
           set +e
           if [ -f "${config}" ]; then
-            ${pkgs.coreutils}/bin/cp -f ${config} /etc/resolv.conf
+            ${pkgs.coreutils}/bin/ln -s ${config} /etc/resolv.conf
           fi
           exit 0
         '';
@@ -62,14 +63,14 @@ in {
         text = ''
           set -x
           set +e
-          if [ -f "/etc/resolv.conf.default" ]; then
-            ${pkgs.coreutils}/bin/cp -f /etc/resolv.conf.default /etc/resolv.conf
+          if [ -f "/etc/resolv.conf.d/reslov.conf.nymdefault" ]; then
+            ${pkgs.coreutils}/bin/ln -s /etc/resolv.conf.d/resolv.conf.nymdefault /etc/resolv.conf
           elif [ -f "/etc/resolv.conf.nymbackup" ]; then
-            ${pkgs.coreutils}/bin/cp -f /etc/resolv.conf.nymbackup /etc/resolv.conf
+            ${pkgs.coreutils}/bin/ln -s /etc/resolv.conf.nymbackup /etc/resolv.conf
           fi
           exit 0
         '';
-        script = mkpkgs.writeShellScriptBin name text;
+        script = pkgs.writeShellScriptBin name text;
       in "${script}/bin/${name}";
     };
   };
