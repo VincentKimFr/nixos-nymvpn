@@ -3,7 +3,6 @@
   lib,
   config,
   pkgs,
-  options,
   nym-vpn-core,
   ...
 }: let

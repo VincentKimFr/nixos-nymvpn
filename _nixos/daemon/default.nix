@@ -68,11 +68,12 @@ in {
 
   environment.systemPackages = [
     nym-vpn-core
-    # pkgs.xdg-utils
-    # pkgs.iproute2
-    # pkgs.iptables
-    # pkgs.nftables
-    # pkgs.coreutils
+
+    pkgs.xdg-utils
+    pkgs.iproute2
+    pkgs.iptables
+    pkgs.nftables
+    pkgs.coreutils
   ];
 
   # Force static content inside /etc/resolv.conf
@@ -102,10 +103,13 @@ in {
       # Dns
       "systemd-resolved.service"
       "unbound.service"
-
       "NetworkManager.service"
     ];
+    wants = ["systemd-resolved.service"];
+    requires = ["systemd-resolved.service"];
+
     before = ["network-online.target"];
+    bindsTo = mkDefault ["systemd-resolved.service"];
 
     wantedBy = [
       "multi-user.target"
@@ -114,15 +118,20 @@ in {
 
     # Starting nym-vpnd.service stops the local dns resolver if one is already running on port 53.
     # Invertly starting the local resolver "nsd.service" or "unbound.service" will stop "nym-vpnd.service"
-    conflicts = with lib;
-      mkMerge [
-        (mkIf (config.services.nsd.port == 53) ["nsd.service"])
-        (mkIf (
-            (config.services.unbound.enable == true)
-            || (config.services.unbound.settings.server.port == "53")
-          )
-          ["unbound.service"])
-      ];
+
+    # Stop if unbound is running,
+    # thus stopping the nym-vpnd daemon and deps:
+    # - systemd-resolved.
+    # conflicts = with lib;
+    #   mkMerge [
+    #     (mkIf (config.services.unbound.enable == true)
+    #       && (config.services.nsd.port == 53) ["nsd.service"])
+    #     (mkIf
+    #       (config.services.unbound.enable == true)
+    #       || (config.services.unbound.settings.server.port == "53")
+    #       ["unbound.service"])
+    #     ["resolvconf.service"]
+    #   ];
 
     # Required on NixOS:
     # upstream expects these networking tools in PATH.

@@ -4,6 +4,7 @@
     ./polkit.nix
 
     ./firewall.nix
+    ./dns.nix
 
     ./daemon.nix
 
