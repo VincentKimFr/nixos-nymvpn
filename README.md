@@ -1,5 +1,7 @@
 <div align="center">
+
 <img src="public/images/nymvpn.nixos.png" alt="NymVPN for Nixos" width="260">
+
 # nymvpn.nixos
 
 **[NymVPN](https://github.com/nymtech/nym-vpn-client) Privacy-preserving VPN for NixOs**
