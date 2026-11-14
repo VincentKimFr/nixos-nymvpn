@@ -92,8 +92,8 @@ in {
 
     after = [
       # Dns
-      "systemd-resolved.service"
       "unbound.service"
+      "systemd-resolved.service"
       "NetworkManager.service"
     ];
     before = ["network-online.target"];
@@ -138,11 +138,15 @@ in {
           config.services.${moduleName}.logLevel
         };
     in {
-      # Type = "forking";
-      Type = "exec";
-
       # ExecStart = "${nym-vpn-core}/bin/nym-vpnd -v run-as-service";
-      ExecStart = "${nym-vpn-core}/bin/nym-vpnd ${verbosity} run-with-args";
+      ExecStart = let
+        name = "nym-vpnd-run";
+        text = ''
+          set -x
+          ${nym-vpn-core}/bin/nym-vpnd ${verbosity} run-with-args
+        '';
+        script = pkgs.writeShellScriptBin name text;
+      in "${script}/bin/${name}";
 
       Restart = "always";
       RestartSec = 2;

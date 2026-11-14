@@ -34,7 +34,7 @@ in {
     ];
 
   systemd.services.nym-vpnd.serviceConfig.ExecStartPost = with lib; let
-    name = "nym-vpnd-script";
+    name = "nym-vpnd-connect-script";
     text =
       ''
         set -x
@@ -63,7 +63,8 @@ in {
       + (
         if (config.services.${moduleName}.autoconnect.enable == true)
         then ''
-          ${nym-vpn-core}/bin/nym-vpnc connect
+          sleep 2
+          ${nym-vpn-core}/bin/nym-vpnc connect --wait
         ''
         else ""
       )

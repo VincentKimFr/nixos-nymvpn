@@ -93,7 +93,10 @@ in {
   };
 
   # Restarts unbound when nym-vpnd / systemd-resolved service is down.
-  systemd.services.unbound.conflicts = [
-    "systemd-resolved.service"
-  ];
+  systemd.services.unbound = {
+    before = ["systemd-resolved.service"];
+    conflicts = [
+      "systemd-resolved.service"
+    ];
+  };
 }
