@@ -14,8 +14,13 @@ in
 
     # Mandatory port list taken from `nft list ruleset` and table `nym`
     networking.firewall = {
-      checkReversePath = "loose";
+      ## Debug drop packets
       # enable = mkForce false;
+      # checkReversePath = "strict";
+      # logReversePathDrops = true;
+
+      checkReversePath = "loose";
+
       enable = true;
       allowedTCPPorts = [
         # dns-over-tls
