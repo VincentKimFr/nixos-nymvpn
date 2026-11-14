@@ -6,7 +6,7 @@
 
 **[NymVPN](https://github.com/nymtech/nym-vpn-client) Privacy-preserving VPN for NixOs**
 
-<div>
+</div>
 
 ## Install
 
