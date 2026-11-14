@@ -1,5 +1,9 @@
 # nymvpn.nixos
 
+<div align="center">
+    <img src="public/images/nymvpn.nixos.png" alt="NymVPN for Nixos" width="400">
+<div>
+
 [NymVPN](https://github.com/nymtech/nym-vpn-client)
 module/flake for NixOS with Polkit, `TunDevice`, and systemd runtime fixes.
 
