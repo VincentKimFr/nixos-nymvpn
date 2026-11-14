@@ -50,7 +50,7 @@ in {
           set -x
           set +e
           if [ -f "${config}" ]; then
-            ${pkgs.coreutils}/bin/ln -s ${config} /etc/resolv.conf
+            ${pkgs.coreutils}/bin/ln -fs ${config} /etc/resolv.conf
           fi
           exit 0
         '';
@@ -64,9 +64,9 @@ in {
           set -x
           set +e
           if [ -f "/etc/resolv.conf.d/reslov.conf.nymdefault" ]; then
-            ${pkgs.coreutils}/bin/ln -s /etc/resolv.conf.d/resolv.conf.nymdefault /etc/resolv.conf
+            ${pkgs.coreutils}/bin/ln -fs /etc/resolv.conf.d/resolv.conf.nymdefault /etc/resolv.conf
           elif [ -f "/etc/resolv.conf.nymbackup" ]; then
-            ${pkgs.coreutils}/bin/ln -s /etc/resolv.conf.nymbackup /etc/resolv.conf
+            ${pkgs.coreutils}/bin/ln -fs /etc/resolv.conf.nymbackup /etc/resolv.conf
           fi
           exit 0
         '';
